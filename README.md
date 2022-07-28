@@ -9,4 +9,4 @@
 
 ---
 
-Project URL - [Rss Reader](https://frontend-project-lvl3-navy-seven.vercel.app/)
+Project URL - <a href="https://frontend-project-lvl3-navy-seven.vercel.app/" target="_blank">Rss Reader</a>
