@@ -78,7 +78,7 @@ export default () => {
                 });
 
                 // add items
-                rssObject.items.forEach(item => {
+                rssObject.items.forEach((item) => {
                   watchedState.rssPosts.push({
                     rssFeedId,
                     title: item.itemTitle,
