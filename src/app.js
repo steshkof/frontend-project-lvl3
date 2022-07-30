@@ -8,6 +8,7 @@ import _ from 'lodash';
 import view from './view.js';
 import ru from './locales/ru.js';
 import parser from './parser.js';
+import 'bootstrap';
 
 export default () => {
   i18
@@ -37,6 +38,7 @@ export default () => {
         rssFeeds: [],
         rssPosts: [],
         visitedPosts: [],
+        modal: null,
       };
 
       const watchedState = onChange(state, (path) => {
@@ -118,7 +120,7 @@ export default () => {
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const inputValue = formData.get('url');
+        const inputValue = formData.get('url').trim();
 
         const schema = yup.string().url().required();
         schema
@@ -158,13 +160,8 @@ export default () => {
         const { id } = e.target.dataset;
 
         if (!id) return;
-        
-        watchedState.visitedPosts.push(id)
-
-        
-        // const currentPost = state.rssPosts.find(({ id: postId }) => postId === id);
-        // currentPost.visited = true;
-
+        watchedState.visitedPosts.push(id);
+        if (e.target.localName === 'button') watchedState.modal = id;
       })
 
       setTimeout(() => updateFeeds(), 5000);

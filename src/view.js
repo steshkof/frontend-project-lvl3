@@ -71,7 +71,16 @@ export default (state, path, elements) => {
       a.setAttribute('target', '_blank');
       a.setAttribute('rel', 'noopener noreferrer');
 
+      const button = document.createElement('button');
+      button.setAttribute('type', 'button');
+      button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+      button.dataset.id = post.id;
+      button.dataset.bsToggle = 'modal';
+      button.dataset.bsTarget = '#modal';
+      button.textContent = 'Просмотр';
+
       li.append(a);
+      li.append(button);
       ul.append(li);
     })
   }
@@ -85,6 +94,16 @@ export default (state, path, elements) => {
         a.classList.remove('fw-bold');
       }
     });
+  }
+
+  const fillModal = () => {
+    const post = state.rssPosts.find((post) => post.id === state.modal);
+
+    const modal = document.getElementById('modal');
+    modal.querySelector('.modal-title').textContent = post.title;
+    modal.querySelector('.modal-body').textContent = post.description;
+    modal.querySelector('.full-article').setAttribute('href', post.link);
+    console.log(post);
   }
 
   switch (path) {
@@ -119,6 +138,10 @@ export default (state, path, elements) => {
     case 'visitedPosts':
       markVisitedPosts();
       break;
+
+    case 'modal':
+        fillModal();
+        break;
 
     default:
       // throw new Error('Unknown path recieved');
