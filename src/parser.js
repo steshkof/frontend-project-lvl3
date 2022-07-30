@@ -4,7 +4,6 @@ export default (rssContent) => {
 
   const rssTitle = parsedRSS.querySelector('title').textContent;
   const rssDescription = parsedRSS.querySelector('description').textContent;
-  const rssLink = parsedRSS.querySelector('link').textContent;
 
   const itemsArray = [...parsedRSS.querySelectorAll('item')];
   const items = itemsArray.map((item) => {
@@ -15,6 +14,6 @@ export default (rssContent) => {
   });
 
   return {
-    rssTitle, rssDescription, rssLink, items,
+    rssTitle, rssDescription, items,
   };
 };

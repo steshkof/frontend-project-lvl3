@@ -3,7 +3,7 @@ export default {
     errors: {
       url: 'Ссылка должна быть валидным URL',
       unknown: 'Неизвестная ошибка',
-      rssExists: 'RSS уже существует',
+      rssExists: 'RSS уже загружен',
     },
     success: 'RSS успешно загружен',
     working: 'Загрузка...',
