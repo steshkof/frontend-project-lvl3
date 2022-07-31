@@ -1,7 +1,7 @@
-/*eslint-disable*/
+import i18 from 'i18next';
 
 export default (state, path, elements) => {
-  const { input, feedback } = elements;
+  const { input, feedback, submitBtn } = elements;
 
   const validateInput = () => {
     if (state.form.isValid) {
@@ -11,17 +11,67 @@ export default (state, path, elements) => {
     }
   };
 
-  const printFeedback = () => {
+  const formIsBlocked = (blockStatus) => {
+    if (blockStatus) {
+      input.setAttribute('readonly', '');
+      submitBtn.setAttribute('disabled', '');
+    } else {
+      input.removeAttribute('readonly');
+      submitBtn.removeAttribute('disabled');
+    }
+  };
+
+  const printFeedback = (status, error) => {
     const feedbackClassList = {
       success: 'text-success',
       warning: 'text-warning',
       error: 'text-danger',
     };
-    feedback.textContent = state.feedback.text;
     Object.values(feedbackClassList).forEach((className) => {
       feedback.classList.remove(className);
     });
-    feedback.classList.add(feedbackClassList[state.feedback.type]);
+
+    switch (status) {
+      case 'success':
+        feedback.classList.add(feedbackClassList.success);
+        feedback.textContent = i18.t('success');
+        formIsBlocked(false);
+        break;
+
+      case 'working':
+        feedback.classList.add(feedbackClassList.warning);
+        feedback.textContent = i18.t('working');
+        formIsBlocked(true);
+        break;
+
+      case 'failed':
+        feedback.classList.add(feedbackClassList.error);
+        formIsBlocked(false);
+        switch (error) {
+          case ('url'):
+            feedback.textContent = i18.t('errors.url');
+            break;
+
+          case ('rssExists'):
+            feedback.textContent = i18.t('errors.rssExists');
+            break;
+
+          case ('networkError'):
+            feedback.textContent = i18.t('errors.networkError');
+            break;
+
+          case ('notRss'):
+            feedback.textContent = i18.t('errors.notRss');
+            break;
+
+          default:
+            feedback.textContent = i18.t('errors.unknown');
+            break;
+        }
+        break;
+      default:
+        break;
+    }
   };
 
   const printFeeds = () => {
@@ -30,13 +80,13 @@ export default (state, path, elements) => {
 
     const ul = document.createElement('ul');
     ul.classList.add('list-group', 'border-0', 'rounded-0');
-    
+
     feedsContainer.querySelector('.card').append(ul);
 
     state.rssFeeds.forEach((feed) => {
       const li = document.createElement('li');
       li.classList.add('list-group-item', 'border-0', 'border-end-0');
-      
+
       const h3 = document.createElement('h3');
       h3.classList.add('h6', 'm-0');
       h3.textContent = feed.title;
@@ -44,18 +94,18 @@ export default (state, path, elements) => {
       const p = document.createElement('p');
       p.classList.add('m-0', 'small', 'text-black-50');
       p.textContent = feed.description;
-      
+
       li.append(h3, p);
       ul.append(li);
-    })
-  }
+    });
+  };
 
   const printPosts = () => {
     const postsContainer = document.querySelector('.posts');
     postsContainer.innerHTML = '<div class="card border-0"><div class="card-body"><h2 class="card-title h4">Посты</h2></div></div>';
-    
+
     const ul = document.createElement('ul');
-    ul.classList.add('list-group', 'border-0', 'rounded-0')
+    ul.classList.add('list-group', 'border-0', 'rounded-0');
 
     postsContainer.querySelector('.card').append(ul);
 
@@ -82,8 +132,8 @@ export default (state, path, elements) => {
       li.append(a);
       li.append(button);
       ul.append(li);
-    })
-  }
+    });
+  };
 
   const markVisitedPosts = () => {
     const visitedPostsIds = state.visitedPosts;
@@ -94,18 +144,17 @@ export default (state, path, elements) => {
         a.classList.remove('fw-bold');
       }
     });
-  }
+  };
 
   const fillModal = () => {
-    const post = state.rssPosts.find((post) => post.id === state.modal);
+    const post = state.rssPosts.find((rsspost) => rsspost.id === state.modal);
 
     const modal = document.getElementById('modal');
     modal.querySelector('.modal-title').textContent = post.title;
     modal.querySelector('.modal-body').textContent = post.description;
     modal.querySelector('.full-article').setAttribute('href', post.link);
     console.log(post);
-  }
-
+  };
   switch (path) {
     case 'form.isValid':
       validateInput();
@@ -115,8 +164,12 @@ export default (state, path, elements) => {
       input.value = state.form.inputValue;
       break;
 
-    case 'feedback.text':
-      printFeedback();
+    case 'process.status':
+      printFeedback(state.process.status, state.process.error);
+      break;
+
+    case 'process.error':
+      printFeedback(state.process.status, state.process.error);
       break;
 
     case 'form.readOnly':
@@ -133,18 +186,18 @@ export default (state, path, elements) => {
 
     case 'rssPosts':
       printPosts();
-      break
-    
+      break;
+
     case 'visitedPosts':
       markVisitedPosts();
       break;
 
     case 'modal':
-        fillModal();
-        break;
+      fillModal();
+      break;
 
     default:
-      // throw new Error('Unknown path recieved');
+      // throw new Error(i18.t('errors.unknown'));
       break;
   }
 };

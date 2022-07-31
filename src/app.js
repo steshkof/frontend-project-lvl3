@@ -1,5 +1,3 @@
-/*eslint-disable*/
-
 import onChange from 'on-change';
 import * as yup from 'yup';
 import i18 from 'i18next';
@@ -22,7 +20,7 @@ export default () => {
         input: document.getElementById('url-input'),
         feedback: document.querySelector('.feedback'),
         postsContainer: document.querySelector('.posts'),
-        // submitBtn: document.querySelector('button[type="submit"]'),
+        submitBtn: document.querySelector('button[type="submit"]'),
       };
 
       const state = {
@@ -31,9 +29,9 @@ export default () => {
           readOnly: false,
           isValid: true,
         },
-        feedback: {
-          text: '',
-          type: '',
+        process: {
+          status: null, // working, success, error
+          error: null,
         },
         rssFeeds: [],
         rssPosts: [],
@@ -104,11 +102,6 @@ export default () => {
         Promise.all(promises).finally(() => setTimeout(() => updateFeeds(), 5000));
       };
 
-      const setFeedback = (type, text) => {
-        watchedState.feedback.type = type;
-        watchedState.feedback.text = text;
-      };
-
       const setInputValue = (value = '') => {
         watchedState.form.inputValue = value;
       };
@@ -122,13 +115,23 @@ export default () => {
         const formData = new FormData(e.target);
         const inputValue = formData.get('url').trim();
 
+        yup.setLocale({
+          string: {
+            url: 'errors.url',
+          },
+          mixed: {
+            empty: 'errors.required',
+          },
+        });
+
         const schema = yup.string().url().required();
         schema
           .validate(inputValue)
           .then(() => {
             setInputValue(inputValue);
             setFormValidation(true);
-            setFeedback('warning', i18.t('working'));
+            watchedState.process.status = 'working';
+            watchedState.process.error = 'null';
 
             axios.get(proxyUrl(inputValue))
               .then((response) => {
@@ -136,23 +139,29 @@ export default () => {
 
                 if (!feedExists(inputValue)) {
                   addNewFeed(rssObject);
-                  setFeedback('success', i18.t('success'));
-                  setInputValue();
+                  watchedState.process.status = 'success';
+                  setInputValue('');
                 } else {
                   setFormValidation(false);
-                  setFeedback('error', i18.t('errors.rssExists'));
+                  watchedState.process.error = 'rssExists';
+                  watchedState.process.status = 'failed';
                 }
               })
               .catch((error) => {
-                // setFeedback('error', i18.t('networkError'));
-                setFeedback('error', error);
                 setFormValidation(false);
+                if (error.isAxiosError) {
+                  watchedState.process.error = 'networkError';
+                } else {
+                  watchedState.process.error = 'notRss';
+                }
+                watchedState.process.status = 'failed';
               });
           })
           .catch(() => {
             setFormValidation(false);
-            setFeedback('error', i18.t('errors.url'));
-            setInputValue();
+            watchedState.process.error = 'url';
+            watchedState.process.status = 'failed';
+            console.log(watchedState);
           });
       });
 
@@ -162,7 +171,7 @@ export default () => {
         if (!id) return;
         watchedState.visitedPosts.push(id);
         if (e.target.localName === 'button') watchedState.modal = id;
-      })
+      });
 
       setTimeout(() => updateFeeds(), 5000);
     });

@@ -1,12 +1,14 @@
 export default {
   translation: {
     errors: {
+      empty: 'Не должно быть пустым',
+      notRss: 'Ресурс не содержит валидный RSS',
       url: 'Ссылка должна быть валидным URL',
+      rssExists: 'RSS уже существует',
+      networkError: 'Ошибка сети',
       unknown: 'Неизвестная ошибка',
-      rssExists: 'RSS уже загружен',
     },
     success: 'RSS успешно загружен',
     working: 'Загрузка...',
-    networkError: 'Какие-то проблемы с сетью, попробуйте еще раз',
   },
 };
