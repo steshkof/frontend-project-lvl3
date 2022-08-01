@@ -136,6 +136,7 @@ export default () => {
             setFormValidation(true);
             watchedState.process.status = 'working';
             watchedState.process.error = 'null';
+            watchedState.form.readOnly = true;
 
             axios.get(proxyUrl(inputValue))
               .then((response) => {
@@ -145,10 +146,12 @@ export default () => {
                   addNewFeed(rssObject);
                   watchedState.process.status = 'success';
                   watchedState.form.inputValue = '';
+                  watchedState.form.readOnly = false;
                 } else {
                   setFormValidation(false);
                   watchedState.process.error = 'rssExists';
                   watchedState.process.status = 'failed';
+                  watchedState.form.readOnly = false;
                 }
               })
               .catch((error) => {
@@ -159,12 +162,14 @@ export default () => {
                   watchedState.process.error = 'notRss';
                 }
                 watchedState.process.status = 'failed';
+                watchedState.form.readOnly = false;
               });
           })
           .catch(() => {
             setFormValidation(false);
             watchedState.process.error = 'url';
             watchedState.process.status = 'failed';
+            watchedState.form.readOnly = false;
             console.log(watchedState);
           });
       });

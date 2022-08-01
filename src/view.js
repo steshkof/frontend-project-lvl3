@@ -21,6 +21,10 @@ export default (state, path, elements) => {
     submitBtn.removeAttribute('disabled');
   };
 
+  const clearValue = () => {
+    input.value = '';
+  };
+
   const printFeedBack = (text, type = 'error') => {
     feedback.textContent = text;
 
@@ -40,6 +44,7 @@ export default (state, path, elements) => {
     switch (status) {
       case 'success':
         printFeedBack(i18.t('success'), 'success');
+        clearValue();
         unblockForm();
         break;
 
@@ -169,24 +174,12 @@ export default (state, path, elements) => {
       validateInput();
       break;
 
-    case 'form.inputValue':
-      input.value = state.form.inputValue;
-      break;
-
     case 'process.status':
       processFormAndFeedback(state.process.status, state.process.error);
       break;
 
     case 'process.error':
       processFormAndFeedback(state.process.status, state.process.error);
-      break;
-
-    case 'form.readOnly':
-      if (state.form.readOnly) {
-        input.setAttribute('readonly');
-      } else {
-        input.removeAttribute('readonly');
-      }
       break;
 
     case 'rssFeeds':
