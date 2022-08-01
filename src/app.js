@@ -51,15 +51,20 @@ export default () => {
       };
 
       const uniqueId = (function () {
-        let count = 0;
-        return () => {
-          count += 1;
-          return `${count}`;
+        const prefixes = { default: 0 };
+        return (prefix) => {
+          if (prefix) {
+            if (!prefixes[prefix]) prefixes[prefix] = 0;
+            prefixes[prefix] += 1;
+            return `${prefix}-${prefixes[prefix]}`;
+          }
+          prefixes.default += 1;
+          return `${prefixes.default}`;
         };
       }());
 
       const addNewFeed = (rssObject) => {
-        const rssFeedId = uniqueId();
+        const rssFeedId = uniqueId('feed');
 
         watchedState.rssFeeds.push({
           id: rssFeedId,
@@ -71,7 +76,7 @@ export default () => {
         rssObject.items.forEach((item) => {
           watchedState.rssPosts.push({
             rssFeedId,
-            id: uniqueId(),
+            id: uniqueId('post'),
             title: item.itemTitle,
             description: item.itemDescription,
             link: item.itemLink,
@@ -93,7 +98,7 @@ export default () => {
                   if (!titlesOfPostsInState.includes(post.itemTitle)) {
                     watchedState.rssPosts.push({
                       rssFeedId: rssFeed.id,
-                      id: uniqueId(),
+                      id: uniqueId('post'),
                       title: post.itemTitle,
                       description: post.itemDescription,
                       link: post.itemLink,
@@ -107,10 +112,6 @@ export default () => {
             return true;
           });
         Promise.all(promises).finally(() => setTimeout(() => updateFeeds(), 5000));
-      };
-
-      const setInputValue = (value = '') => {
-        watchedState.form.inputValue = value;
       };
 
       const setFormValidation = (value) => {
@@ -135,7 +136,7 @@ export default () => {
         schema
           .validate(inputValue)
           .then(() => {
-            setInputValue(inputValue);
+            watchedState.form.inputValue = (inputValue);
             setFormValidation(true);
             watchedState.process.status = 'working';
             watchedState.process.error = 'null';
@@ -147,7 +148,7 @@ export default () => {
                 if (!feedExists(inputValue)) {
                   addNewFeed(rssObject);
                   watchedState.process.status = 'success';
-                  setInputValue('');
+                  watchedState.form.inputValue = '';
                 } else {
                   setFormValidation(false);
                   watchedState.process.error = 'rssExists';

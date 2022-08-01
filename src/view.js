@@ -11,17 +11,19 @@ export default (state, path, elements) => {
     }
   };
 
-  const formIsBlocked = (blockStatus) => {
-    if (blockStatus) {
-      input.setAttribute('readonly', '');
-      submitBtn.setAttribute('disabled', '');
-    } else {
-      input.removeAttribute('readonly');
-      submitBtn.removeAttribute('disabled');
-    }
+  const blockForm = () => {
+    input.setAttribute('readonly', '');
+    submitBtn.setAttribute('disabled', '');
   };
 
-  const printFeedback = (status, error) => {
+  const unblockForm = () => {
+    input.removeAttribute('readonly');
+    submitBtn.removeAttribute('disabled');
+  };
+
+  const printFeedBack = (text, type = 'error') => {
+    feedback.textContent = text;
+
     const feedbackClassList = {
       success: 'text-success',
       warning: 'text-warning',
@@ -31,44 +33,46 @@ export default (state, path, elements) => {
       feedback.classList.remove(className);
     });
 
+    feedback.classList.add(feedbackClassList[type]);
+  };
+
+  const processFormAndFeedback = (status, error) => {
     switch (status) {
       case 'success':
-        feedback.classList.add(feedbackClassList.success);
-        feedback.textContent = i18.t('success');
-        formIsBlocked(false);
+        printFeedBack(i18.t('success'), 'success');
+        unblockForm();
         break;
 
       case 'working':
-        feedback.classList.add(feedbackClassList.warning);
-        feedback.textContent = i18.t('working');
-        formIsBlocked(true);
+        printFeedBack(i18.t('working'), 'warning');
+        blockForm();
         break;
 
       case 'failed':
-        feedback.classList.add(feedbackClassList.error);
-        formIsBlocked(false);
+        unblockForm();
         switch (error) {
           case ('url'):
-            feedback.textContent = i18.t('errors.url');
+            printFeedBack(i18.t('errors.url'), 'error');
             break;
 
           case ('rssExists'):
-            feedback.textContent = i18.t('errors.rssExists');
+            printFeedBack(i18.t('errors.rssExists'), 'error');
             break;
 
           case ('networkError'):
-            feedback.textContent = i18.t('errors.networkError');
+            printFeedBack(i18.t('errors.networkError'), 'error');
             break;
 
           case ('notRss'):
-            feedback.textContent = i18.t('errors.notRss');
+            printFeedBack(i18.t('errors.notRss'), 'error');
             break;
 
           default:
-            feedback.textContent = i18.t('errors.unknown');
+            printFeedBack(i18.t('errors.unknown'));
             break;
         }
         break;
+
       default:
         break;
     }
@@ -115,7 +119,6 @@ export default (state, path, elements) => {
 
       const a = document.createElement('a');
 
-      console.log(state);
       if (state.visitedPosts.includes(`${post.id}`)) {
         a.classList.add('fw-normal', 'link-secondary');
       } else {
@@ -161,6 +164,7 @@ export default (state, path, elements) => {
     modal.querySelector('.full-article').setAttribute('href', post.link);
     console.log(post);
   };
+
   switch (path) {
     case 'form.isValid':
       validateInput();
@@ -171,11 +175,11 @@ export default (state, path, elements) => {
       break;
 
     case 'process.status':
-      printFeedback(state.process.status, state.process.error);
+      processFormAndFeedback(state.process.status, state.process.error);
       break;
 
     case 'process.error':
-      printFeedback(state.process.status, state.process.error);
+      processFormAndFeedback(state.process.status, state.process.error);
       break;
 
     case 'form.readOnly':
@@ -203,7 +207,6 @@ export default (state, path, elements) => {
       break;
 
     default:
-      // throw new Error(i18.t('errors.unknown'));
       break;
   }
 };
