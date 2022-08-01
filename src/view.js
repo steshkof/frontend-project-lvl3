@@ -162,7 +162,6 @@ export default (state, path, elements) => {
     modal.querySelector('.modal-title').textContent = post.title;
     modal.querySelector('.modal-body').textContent = post.description;
     modal.querySelector('.full-article').setAttribute('href', post.link);
-    console.log(post);
   };
 
   switch (path) {

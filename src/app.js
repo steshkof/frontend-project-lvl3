@@ -63,6 +63,16 @@ export default () => {
         };
       }());
 
+      const addNewPost = (post, feedId) => {
+        watchedState.rssPosts.push({
+          rssFeedId: feedId,
+          id: uniqueId('post'),
+          title: post.itemTitle,
+          description: post.itemDescription,
+          link: post.itemLink,
+        });
+      };
+
       const addNewFeed = (rssObject) => {
         const rssFeedId = uniqueId('feed');
 
@@ -73,15 +83,7 @@ export default () => {
           link: state.form.inputValue,
         });
 
-        rssObject.items.forEach((item) => {
-          watchedState.rssPosts.push({
-            rssFeedId,
-            id: uniqueId('post'),
-            title: item.itemTitle,
-            description: item.itemDescription,
-            link: item.itemLink,
-          });
-        });
+        rssObject.posts.forEach((post) => addNewPost(post, rssFeedId));
       };
 
       const updateFeeds = () => {
@@ -90,19 +92,13 @@ export default () => {
             axios.get(proxyUrl(rssFeed.link))
               .then((response) => {
                 const rssObject = parser(response.data.contents);
-                const posts = rssObject.items;
+                const { posts } = rssObject;
 
                 const titlesOfPostsInState = state.rssPosts.map((post) => post.title);
 
                 posts.forEach((post) => {
                   if (!titlesOfPostsInState.includes(post.itemTitle)) {
-                    watchedState.rssPosts.push({
-                      rssFeedId: rssFeed.id,
-                      id: uniqueId('post'),
-                      title: post.itemTitle,
-                      description: post.itemDescription,
-                      link: post.itemLink,
-                    });
+                    addNewPost(post, rssFeed.id);
                   }
                 });
               })
