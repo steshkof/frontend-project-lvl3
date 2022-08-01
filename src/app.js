@@ -2,7 +2,6 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import i18 from 'i18next';
 import axios from 'axios';
-import _ from 'lodash';
 import view from './view.js';
 import ru from './locales/ru.js';
 import parser from './parser.js';
@@ -51,8 +50,16 @@ export default () => {
         return false;
       };
 
+      const uniqueId = (function () {
+        let count = 0;
+        return () => {
+          count += 1;
+          return count;
+        };
+      }());
+
       const addNewFeed = (rssObject) => {
-        const rssFeedId = _.uniqueId();
+        const rssFeedId = uniqueId();
 
         watchedState.rssFeeds.push({
           id: rssFeedId,
@@ -64,7 +71,7 @@ export default () => {
         rssObject.items.forEach((item) => {
           watchedState.rssPosts.push({
             rssFeedId,
-            id: _.uniqueId(),
+            id: uniqueId(),
             title: item.itemTitle,
             description: item.itemDescription,
             link: item.itemLink,
@@ -86,7 +93,7 @@ export default () => {
                   if (!titlesOfPostsInState.includes(post.itemTitle)) {
                     watchedState.rssPosts.push({
                       rssFeedId: rssFeed.id,
-                      id: _.uniqueId(),
+                      id: uniqueId(),
                       title: post.itemTitle,
                       description: post.itemDescription,
                       link: post.itemLink,
