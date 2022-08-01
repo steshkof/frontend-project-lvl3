@@ -114,7 +114,13 @@ export default (state, path, elements) => {
       li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
 
       const a = document.createElement('a');
-      a.classList.add('fw-bold');
+
+      console.log(state);
+      if (state.visitedPosts.includes(`${post.id}`)) {
+        a.classList.add('fw-normal', 'link-secondary');
+      } else {
+        a.classList.add('fw-bold');
+      }
       a.textContent = post.title;
       a.dataset.id = post.id;
       a.setAttribute('href', post.link);
