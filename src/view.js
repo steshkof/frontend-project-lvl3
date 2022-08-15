@@ -33,11 +33,19 @@ export default (state, path, elements) => {
       warning: 'text-warning',
       error: 'text-danger',
     };
+
     Object.values(feedbackClassList).forEach((className) => {
       feedback.classList.remove(className);
     });
 
     feedback.classList.add(feedbackClassList[type]);
+  };
+
+  const errorMessages = {
+    url: 'errors.url',
+    rssExists: 'errors.rssExists',
+    networkError: 'errors.networkError',
+    notRss: 'errors.notRss',
   };
 
   const processFormAndFeedback = (status, error) => {
@@ -55,26 +63,11 @@ export default (state, path, elements) => {
 
       case 'failed':
         unblockForm();
-        switch (error) {
-          case ('url'):
-            printFeedBack(i18.t('errors.url'), 'error');
-            break;
 
-          case ('rssExists'):
-            printFeedBack(i18.t('errors.rssExists'), 'error');
-            break;
-
-          case ('networkError'):
-            printFeedBack(i18.t('errors.networkError'), 'error');
-            break;
-
-          case ('notRss'):
-            printFeedBack(i18.t('errors.notRss'), 'error');
-            break;
-
-          default:
-            printFeedBack(i18.t('errors.unknown'));
-            break;
+        if (error in errorMessages) {
+          printFeedBack(i18.t(errorMessages[error]));
+        } else {
+          printFeedBack(i18.t('errors.unknown'));
         }
         break;
 

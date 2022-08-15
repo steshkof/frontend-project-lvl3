@@ -6,6 +6,7 @@ import view from './view.js';
 import ru from './locales/ru.js';
 import parser from './parser.js';
 import 'bootstrap';
+import uniqueId from './uniqueId.js';
 
 export default () => {
   i18
@@ -25,7 +26,6 @@ export default () => {
       const state = {
         form: {
           inputValue: '',
-          readOnly: false,
           isValid: true,
         },
         process: {
@@ -49,19 +49,6 @@ export default () => {
         if (rssLinksArray.includes(link)) return true;
         return false;
       };
-
-      const uniqueId = (function () {
-        const prefixes = { default: 0 };
-        return (prefix) => {
-          if (prefix) {
-            if (!prefixes[prefix]) prefixes[prefix] = 0;
-            prefixes[prefix] += 1;
-            return `${prefix}-${prefixes[prefix]}`;
-          }
-          prefixes.default += 1;
-          return `${prefixes.default}`;
-        };
-      }());
 
       const addNewPost = (post, feedId) => {
         watchedState.rssPosts.push({
@@ -114,19 +101,19 @@ export default () => {
         watchedState.form.isValid = value;
       };
 
+      yup.setLocale({
+        string: {
+          url: 'errors.url',
+        },
+        mixed: {
+          empty: 'errors.required',
+        },
+      });
+
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const inputValue = formData.get('url').trim();
-
-        yup.setLocale({
-          string: {
-            url: 'errors.url',
-          },
-          mixed: {
-            empty: 'errors.required',
-          },
-        });
 
         const schema = yup.string().url().required();
         schema
@@ -136,7 +123,6 @@ export default () => {
             setFormValidation(true);
             watchedState.process.status = 'working';
             watchedState.process.error = 'null';
-            watchedState.form.readOnly = true;
 
             axios.get(proxyUrl(inputValue))
               .then((response) => {
@@ -146,12 +132,10 @@ export default () => {
                   addNewFeed(rssObject);
                   watchedState.process.status = 'success';
                   watchedState.form.inputValue = '';
-                  watchedState.form.readOnly = false;
                 } else {
                   setFormValidation(false);
                   watchedState.process.error = 'rssExists';
                   watchedState.process.status = 'failed';
-                  watchedState.form.readOnly = false;
                 }
               })
               .catch((error) => {
@@ -162,14 +146,12 @@ export default () => {
                   watchedState.process.error = 'notRss';
                 }
                 watchedState.process.status = 'failed';
-                watchedState.form.readOnly = false;
               });
           })
           .catch(() => {
             setFormValidation(false);
             watchedState.process.error = 'url';
             watchedState.process.status = 'failed';
-            watchedState.form.readOnly = false;
             console.log(watchedState);
           });
       });
