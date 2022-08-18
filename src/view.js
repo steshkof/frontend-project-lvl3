@@ -63,12 +63,13 @@ export default (state, path, elements) => {
 
       case 'failed':
         unblockForm();
+        printFeedBack(i18.t(errorMessages[error] ?? i18.t('errors.unknown')));
 
-        if (error in errorMessages) {
-          printFeedBack(i18.t(errorMessages[error]));
-        } else {
-          printFeedBack(i18.t('errors.unknown'));
-        }
+        // if (error in errorMessages) {
+        //   printFeedBack(i18.t(errorMessages[error]));
+        // } else {
+        //   printFeedBack(i18.t('errors.unknown'));
+        // }
         break;
 
       default:

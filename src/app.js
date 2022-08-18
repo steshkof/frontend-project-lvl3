@@ -8,6 +8,60 @@ import parser from './parser.js';
 import 'bootstrap';
 import uniqueId from './uniqueId.js';
 
+const proxyUrl = (url) => {
+  const addr = new URL('https://allorigins.hexlet.app/get');
+  addr.searchParams.set('url', url);
+  addr.searchParams.set('disableCache', 'true');
+  return addr;
+};
+
+const addNewPost = (post, feedId, watchedState) => {
+  watchedState.rssPosts.push({
+    rssFeedId: feedId,
+    id: uniqueId('post'),
+    title: post.itemTitle,
+    description: post.itemDescription,
+    link: post.itemLink,
+  });
+};
+
+const addNewFeed = (rssObject, watchedState) => {
+  const rssFeedId = uniqueId('feed');
+
+  watchedState.rssFeeds.push({
+    id: rssFeedId,
+    title: rssObject.rssTitle,
+    description: rssObject.rssDescription,
+    link: watchedState.form.inputValue,
+  });
+
+  rssObject.posts.forEach((post) => addNewPost(post, rssFeedId, watchedState));
+};
+
+const updateFeeds = (watchedState) => {
+  const promises = watchedState.rssFeeds
+    .map((rssFeed) => {
+      axios.get(proxyUrl(rssFeed.link))
+        .then((response) => {
+          const rssObject = parser(response.data.contents);
+          const { posts } = rssObject;
+
+          const titlesOfPostsInState = watchedState.rssPosts.map((post) => post.title);
+
+          posts.forEach((post) => {
+            if (!titlesOfPostsInState.includes(post.itemTitle)) {
+              addNewPost(post, rssFeed.id, watchedState);
+            }
+          });
+        })
+        .catch((error) => {
+          throw new Error(error);
+        });
+      return true;
+    });
+  Promise.all(promises).finally(() => setTimeout(() => updateFeeds(watchedState), 5000));
+};
+
 export default () => {
   i18
     .init({
@@ -15,6 +69,15 @@ export default () => {
       resources: { ru },
     })
     .then(() => {
+      yup.setLocale({
+        string: {
+          url: 'errors.url',
+        },
+        mixed: {
+          empty: 'errors.required',
+        },
+      });
+
       const elements = {
         form: document.querySelector('.rss-form'),
         input: document.getElementById('url-input'),
@@ -42,80 +105,21 @@ export default () => {
         view(state, path, elements);
       });
 
-      const proxyUrl = (url) => `https://allorigins.hexlet.app/get?url=${url}&disableCache=true`;
-
-      const feedExists = (link) => {
-        const rssLinksArray = state.rssFeeds.map((rssFeed) => rssFeed.link);
-        if (rssLinksArray.includes(link)) return true;
-        return false;
-      };
-
-      const addNewPost = (post, feedId) => {
-        watchedState.rssPosts.push({
-          rssFeedId: feedId,
-          id: uniqueId('post'),
-          title: post.itemTitle,
-          description: post.itemDescription,
-          link: post.itemLink,
-        });
-      };
-
-      const addNewFeed = (rssObject) => {
-        const rssFeedId = uniqueId('feed');
-
-        watchedState.rssFeeds.push({
-          id: rssFeedId,
-          title: rssObject.rssTitle,
-          description: rssObject.rssDescription,
-          link: state.form.inputValue,
-        });
-
-        rssObject.posts.forEach((post) => addNewPost(post, rssFeedId));
-      };
-
-      const updateFeeds = () => {
-        const promises = state.rssFeeds
-          .map((rssFeed) => {
-            axios.get(proxyUrl(rssFeed.link))
-              .then((response) => {
-                const rssObject = parser(response.data.contents);
-                const { posts } = rssObject;
-
-                const titlesOfPostsInState = state.rssPosts.map((post) => post.title);
-
-                posts.forEach((post) => {
-                  if (!titlesOfPostsInState.includes(post.itemTitle)) {
-                    addNewPost(post, rssFeed.id);
-                  }
-                });
-              })
-              .catch((error) => {
-                throw new Error(error);
-              });
-            return true;
-          });
-        Promise.all(promises).finally(() => setTimeout(() => updateFeeds(), 5000));
-      };
-
       const setFormValidation = (value) => {
         watchedState.form.isValid = value;
       };
-
-      yup.setLocale({
-        string: {
-          url: 'errors.url',
-        },
-        mixed: {
-          empty: 'errors.required',
-        },
-      });
 
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const inputValue = formData.get('url').trim();
 
-        const schema = yup.string().url().required();
+        const schema = yup
+          .string()
+          .url()
+          .notOneOf(state.rssFeeds.map((feed) => feed.link))
+          .required();
+
         schema
           .validate(inputValue)
           .then(() => {
@@ -128,15 +132,9 @@ export default () => {
               .then((response) => {
                 const rssObject = parser(response.data.contents);
 
-                if (!feedExists(inputValue)) {
-                  addNewFeed(rssObject);
-                  watchedState.process.status = 'success';
-                  watchedState.form.inputValue = '';
-                } else {
-                  setFormValidation(false);
-                  watchedState.process.error = 'rssExists';
-                  watchedState.process.status = 'failed';
-                }
+                addNewFeed(rssObject, watchedState);
+                watchedState.process.status = 'success';
+                watchedState.form.inputValue = '';
               })
               .catch((error) => {
                 setFormValidation(false);
@@ -148,11 +146,11 @@ export default () => {
                 watchedState.process.status = 'failed';
               });
           })
-          .catch(() => {
+          .catch((error) => {
             setFormValidation(false);
-            watchedState.process.error = 'url';
+            if (error.type === 'notOneOf') watchedState.process.error = 'rssExists';
+            if (error.type === 'url') watchedState.process.error = 'url';
             watchedState.process.status = 'failed';
-            console.log(watchedState);
           });
       });
 
@@ -164,6 +162,6 @@ export default () => {
         if (e.target.localName === 'button') watchedState.modal = id;
       });
 
-      setTimeout(() => updateFeeds(), 5000);
+      setTimeout(() => updateFeeds(watchedState), 5000);
     });
 };
