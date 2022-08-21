@@ -22,6 +22,8 @@ export default (rssContent) => {
   }
 
   const errorContent = parserError.textContent;
-  console.error(errorContent);
-  throw new Error(parserError);
+  console.error('PARSER ERROR:', errorContent);
+
+  parserError.type = 'parseError';
+  throw parserError;
 };

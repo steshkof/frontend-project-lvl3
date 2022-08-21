@@ -8,7 +8,7 @@ import parser from './parser.js';
 import 'bootstrap';
 import uniqueId from './uniqueId.js';
 
-const proxyUrl = (url) => {
+const getProxyUrl = (url) => {
   const addr = new URL('https://allorigins.hexlet.app/get');
   addr.searchParams.set('url', url);
   addr.searchParams.set('disableCache', 'true');
@@ -38,10 +38,27 @@ const addNewFeed = (rssObject, watchedState) => {
   rssObject.posts.forEach((post) => addNewPost(post, rssFeedId, watchedState));
 };
 
+const getNewFeed = (url, watchedState) => {
+  axios.get(getProxyUrl(url))
+    .then((response) => {
+      const rssObject = parser(response.data.contents);
+
+      addNewFeed(rssObject, watchedState);
+      watchedState.process.status = 'success';
+      watchedState.form.inputValue = '';
+    })
+    .catch((error) => {
+      watchedState.form.isValid = false;
+      if (error.isAxiosError) watchedState.process.error = 'networkError';
+      if (error.type === 'parseError') watchedState.process.error = 'notRss';
+      watchedState.process.status = 'failed';
+    });
+};
+
 const updateFeeds = (watchedState) => {
   const promises = watchedState.rssFeeds
     .map((rssFeed) => {
-      axios.get(proxyUrl(rssFeed.link))
+      axios.get(getProxyUrl(rssFeed.link))
         .then((response) => {
           const rssObject = parser(response.data.contents);
           const { posts } = rssObject;
@@ -105,10 +122,6 @@ export default () => {
         view(state, path, elements);
       });
 
-      const setFormValidation = (value) => {
-        watchedState.form.isValid = value;
-      };
-
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -123,31 +136,15 @@ export default () => {
         schema
           .validate(inputValue)
           .then(() => {
-            watchedState.form.inputValue = (inputValue);
-            setFormValidation(true);
+            watchedState.form.inputValue = inputValue;
+            watchedState.form.isValid = true;
             watchedState.process.status = 'working';
             watchedState.process.error = 'null';
 
-            axios.get(proxyUrl(inputValue))
-              .then((response) => {
-                const rssObject = parser(response.data.contents);
-
-                addNewFeed(rssObject, watchedState);
-                watchedState.process.status = 'success';
-                watchedState.form.inputValue = '';
-              })
-              .catch((error) => {
-                setFormValidation(false);
-                if (error.isAxiosError) {
-                  watchedState.process.error = 'networkError';
-                } else {
-                  watchedState.process.error = 'notRss';
-                }
-                watchedState.process.status = 'failed';
-              });
+            getNewFeed(inputValue, watchedState);
           })
           .catch((error) => {
-            setFormValidation(false);
+            watchedState.form.isValid = false;
             if (error.type === 'notOneOf') watchedState.process.error = 'rssExists';
             if (error.type === 'url') watchedState.process.error = 'url';
             watchedState.process.status = 'failed';
