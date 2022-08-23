@@ -114,8 +114,10 @@ export default () => {
         },
         rssFeeds: [],
         rssPosts: [],
-        visitedPosts: [],
         modal: null,
+        ui: {
+          visitedPosts: [],
+        },
       };
 
       const watchedState = onChange(state, (path) => {
@@ -155,7 +157,7 @@ export default () => {
         const { id } = e.target.dataset;
 
         if (!id) return;
-        watchedState.visitedPosts.push(id);
+        watchedState.ui.visitedPosts.push(id);
         if (e.target.localName === 'button') watchedState.modal = id;
       });
 

@@ -41,13 +41,6 @@ export default (state, path, elements) => {
     feedback.classList.add(feedbackClassList[type]);
   };
 
-  const errorMessages = {
-    url: 'errors.url',
-    rssExists: 'errors.rssExists',
-    networkError: 'errors.networkError',
-    notRss: 'errors.notRss',
-  };
-
   const processFormAndFeedback = (status, error) => {
     switch (status) {
       case 'success':
@@ -63,13 +56,7 @@ export default (state, path, elements) => {
 
       case 'failed':
         unblockForm();
-        printFeedBack(i18.t(errorMessages[error] ?? i18.t('errors.unknown')));
-
-        // if (error in errorMessages) {
-        //   printFeedBack(i18.t(errorMessages[error]));
-        // } else {
-        //   printFeedBack(i18.t('errors.unknown'));
-        // }
+        printFeedBack(i18.t([`errors.${error}`, 'errors.unknown']));
         break;
 
       default:
@@ -79,7 +66,7 @@ export default (state, path, elements) => {
 
   const printFeeds = () => {
     const feedsContainer = document.querySelector('.feeds');
-    feedsContainer.innerHTML = '<div class="card border-0"><div class="card-body"><h2 class="card-title h4">Фиды</h2></div></div>';
+    feedsContainer.innerHTML = `<div class="card border-0"><div class="card-body"><h2 class="card-title h4">${i18.t('feeds')}</h2></div></div>`;
 
     const ul = document.createElement('ul');
     ul.classList.add('list-group', 'border-0', 'rounded-0');
@@ -105,7 +92,7 @@ export default (state, path, elements) => {
 
   const printPosts = () => {
     const postsContainer = document.querySelector('.posts');
-    postsContainer.innerHTML = '<div class="card border-0"><div class="card-body"><h2 class="card-title h4">Посты</h2></div></div>';
+    postsContainer.innerHTML = `<div class="card border-0"><div class="card-body"><h2 class="card-title h4">${i18.t('posts')}</h2></div></div>`;
 
     const ul = document.createElement('ul');
     ul.classList.add('list-group', 'border-0', 'rounded-0');
@@ -118,7 +105,7 @@ export default (state, path, elements) => {
 
       const a = document.createElement('a');
 
-      if (state.visitedPosts.includes(`${post.id}`)) {
+      if (state.ui.visitedPosts.includes(`${post.id}`)) {
         a.classList.add('fw-normal', 'link-secondary');
       } else {
         a.classList.add('fw-bold');
@@ -144,7 +131,7 @@ export default (state, path, elements) => {
   };
 
   const markVisitedPosts = () => {
-    const visitedPostsIds = state.visitedPosts;
+    const visitedPostsIds = state.ui.visitedPosts;
     document.querySelectorAll('.posts a').forEach((a) => {
       const id = a.getAttribute('data-id');
       if (visitedPostsIds.includes(id)) {
@@ -184,7 +171,7 @@ export default (state, path, elements) => {
       printPosts();
       break;
 
-    case 'visitedPosts':
+    case 'ui.visitedPosts':
       markVisitedPosts();
       break;
 
