@@ -122,7 +122,7 @@ export default (state, path, elements) => {
       button.dataset.id = post.id;
       button.dataset.bsToggle = 'modal';
       button.dataset.bsTarget = '#modal';
-      button.textContent = 'Просмотр';
+      button.textContent = i18.t('previewPost');
 
       li.append(a);
       li.append(button);

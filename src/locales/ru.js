@@ -12,5 +12,6 @@ export default {
     working: 'Загрузка...',
     feeds: 'Фиды',
     posts: 'Посты',
+    previewPost: 'Просмотр',
   },
 };
